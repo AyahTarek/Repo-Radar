@@ -29,21 +29,25 @@ const STAT_SKELETON_WIDTH = 72;
 export const TrackedRepoCard = memo(function TrackedRepoCard({
   repo,
   isHighlighted = false,
+  highlightToken = 0,
 }: {
   repo: TrackedRepo;
   isHighlighted?: boolean;
+  highlightToken?: number;
 }) {
   const { stats, isLoading, isRefreshing, error, refresh } = useRepoStatsQuery(
     repo.fullName,
   );
 
   // Runs only on the rising edge (a click), not while the highlight is fading out.
+  // `highlightToken` is in the deps so re-clicking the same already-highlighted
+  // repo re-scrolls too, instead of silently doing nothing.
   useEffect(() => {
     if (!isHighlighted) return;
     document
       .getElementById(trackedRepoCardId(repo.fullName))
       ?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [isHighlighted, repo.fullName]);
+  }, [isHighlighted, highlightToken, repo.fullName]);
 
   return (
     <AppCard

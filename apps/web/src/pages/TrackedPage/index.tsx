@@ -17,7 +17,7 @@ export function TrackedPage() {
   const { sort, setSort } = useTrackedSortParam();
   const { repos, page, totalPages, totalCount, setPage } = useTrackedReposPage(sort);
   const { refreshAll, isRefreshing } = useRefreshPageRepos();
-  const { fullName: highlightedFullName, highlight } = useHighlightedRepo();
+  const { fullName: highlightedFullName, token: highlightToken, highlight } = useHighlightedRepo();
 
   if (totalCount === 0) {
     return (
@@ -53,7 +53,11 @@ export function TrackedPage() {
 
       <StarsChartCard repos={repos} page={page} totalPages={totalPages} onBarClick={highlight} />
 
-      <TrackedRepoList repos={repos} highlightedFullName={highlightedFullName} />
+      <TrackedRepoList
+        repos={repos}
+        highlightedFullName={highlightedFullName}
+        highlightToken={highlightToken}
+      />
 
       <TrackedPagination page={page} totalPages={totalPages} onPageChange={setPage} />
     </Stack>

@@ -101,4 +101,40 @@ describe("StarsBarChart", () => {
     const [firstBar] = container.querySelectorAll(".MuiBarChart-element");
     expect(firstBar?.getAttribute("cursor")).toBeNull();
   });
+
+  it("draws no axis highlight when highlightedId is omitted", () => {
+    const { container } = render(
+      <StarsBarChart data={data} valueLabel="Stars" width={TEST_WIDTH} />,
+    );
+
+    expect(container.querySelector(".MuiChartsAxisHighlight-root")).toBeNull();
+  });
+
+  it("draws an axis highlight for the datum matching highlightedId", () => {
+    const { container } = render(
+      <StarsBarChart
+        data={data}
+        valueLabel="Stars"
+        width={TEST_WIDTH}
+        highlightedId="vuejs/core"
+      />,
+    );
+
+    expect(
+      container.querySelector(".MuiChartsAxisHighlight-root"),
+    ).toBeInTheDocument();
+  });
+
+  it("draws no axis highlight for an id that isn't in the data", () => {
+    const { container } = render(
+      <StarsBarChart
+        data={data}
+        valueLabel="Stars"
+        width={TEST_WIDTH}
+        highlightedId="unknown/repo"
+      />,
+    );
+
+    expect(container.querySelector(".MuiChartsAxisHighlight-root")).toBeNull();
+  });
 });

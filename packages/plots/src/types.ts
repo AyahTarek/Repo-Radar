@@ -24,4 +24,11 @@ export type BarChartProps = {
   onBarClick?: ((id: string) => void) | undefined;
   /** Called with a datum's `id` on hover, and `null` on hover-out. Omit for no hover preview. */
   onBarHover?: ((id: string | null) => void) | undefined;
+  /**
+   * Externally drives which bar's axis column is highlighted, e.g. from a linked
+   * list hovering or selecting the matching item. Independent of `onBarHover`,
+   * which reports the chart's *own* pointer hover outward instead of consuming one.
+   * `null`/omitted clears the highlight.
+   */
+  highlightedId?: string | null | undefined;
 };

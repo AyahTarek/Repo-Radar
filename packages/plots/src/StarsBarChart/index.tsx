@@ -8,11 +8,15 @@ import type {
   ChartsActivationEvent,
   ChartsAxisData,
 } from "@mui/x-charts/models";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { CHART_MARGIN, DEFAULT_CHART_HEIGHT } from "../constants";
 import { resolveClickedBarId } from "../helpers/resolveClickedBarId";
 import { truncateLabel } from "../helpers/truncateLabel";
 import type { BarChartProps } from "../types";
+
+// A fixed id (rather than letting MUI auto-generate one) is what lets
+// `highlightedId` below build a matching `highlightedAxis` entry.
+const X_AXIS_ID = "bar-chart-x-axis";
 
 /**
  * A generic labelled bar chart. It receives BarDatum[] and never knows what the
@@ -27,6 +31,7 @@ export function StarsBarChart({
   emptyLabel = "No data to plot yet.",
   onBarClick,
   onBarHover,
+  highlightedId,
 }: BarChartProps) {
   // The band scale's domain must be unique per bar; two tracked repos can share
   // a short name (e.g. "owner-a/react" and "owner-b/react"), which would collapse
@@ -62,13 +67,23 @@ export function StarsBarChart({
     if (id !== undefined) onBarClick(id);
   };
 
+  // A zero-height bar has no rect for MUI's own `cursor: pointer` (tied to
+  // `onItemClick`) to attach to, so this tracks column hover directly and
+  // applies the cursor to the chart as a whole instead - the same column-wide
+  // area `onAxisClick` already treats as clickable.
+  const [isColumnHovered, setIsColumnHovered] = useState(false);
+
   // Bar-item hover state (`onHighlightChange`) is driven by pointer events on the
   // rendered bar rect itself, so it has the same blind spot as `onItemClick` for a
   // zero-height bar. `onHighlightedAxisChange` instead follows the same column-wide
   // pointer tracking as `onAxisClick`, so the preview works for zero-value bars too.
-  const handleHighlightedAxisChange = (axisItems: readonly AxisItemIdentifier[]) => {
-    if (onBarHover === undefined) return;
+  const handleHighlightedAxisChange = (
+    axisItems: readonly AxisItemIdentifier[],
+  ) => {
     const [axisItem] = axisItems;
+    setIsColumnHovered(axisItem !== undefined);
+
+    if (onBarHover === undefined) return;
     if (axisItem === undefined) {
       onBarHover(null);
       return;
@@ -76,6 +91,16 @@ export function StarsBarChart({
     const id = resolveClickedBarId(ids, axisItem.dataIndex);
     onBarHover(id ?? null);
   };
+
+  // The counterpart to `onBarHover`/`onBarClick` above: those report the chart's
+  // own pointer activity outward, this instead lets an external source (e.g. a
+  // hovered list row) drive the chart's highlight, reusing the same axis-band
+  // visual an internal pointer hover already draws.
+  const highlightedAxis = useMemo(() => {
+    if (highlightedId === undefined || highlightedId === null) return [];
+    const dataIndex = ids.indexOf(highlightedId);
+    return dataIndex === -1 ? [] : [{ axisId: X_AXIS_ID, dataIndex }];
+  }, [highlightedId, ids]);
 
   if (data.length === 0) {
     return (
@@ -100,11 +125,17 @@ export function StarsBarChart({
         {...(onBarClick === undefined
           ? {}
           : { onItemClick: handleItemClick, onAxisClick: handleAxisClick })}
-        {...(onBarHover === undefined
+        {...(onBarClick === undefined && onBarHover === undefined
           ? {}
           : { onHighlightedAxisChange: handleHighlightedAxisChange })}
+        highlightedAxis={highlightedAxis}
+        sx={{
+          cursor:
+            onBarClick !== undefined && isColumnHovered ? "pointer" : undefined,
+        }}
         xAxis={[
           {
+            id: X_AXIS_ID,
             scaleType: "band",
             data: ids,
             // The axis's own height (not the chart margin) is what shortenLabels

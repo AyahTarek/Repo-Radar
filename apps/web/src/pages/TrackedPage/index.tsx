@@ -2,20 +2,18 @@ import BookmarksIcon from '@mui/icons-material/BookmarksOutlined';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import { SectionHeader, StateBlock } from '@repo-radar/ui';
-import { useState } from 'react';
 import { Link as RouterLink } from 'react-router';
 import { ROUTES } from '@/app/router/routes';
 import { StarsChartCard } from '@/features/tracked-repos/components/StarsChartCard';
 import { TrackedPagination } from '@/features/tracked-repos/components/TrackedPagination';
 import { TrackedRepoList } from '@/features/tracked-repos/components/TrackedRepoList';
 import { TrackedToolbar } from '@/features/tracked-repos/components/TrackedToolbar';
-import { DEFAULT_TRACKED_SORT } from '@/features/tracked-repos/constants';
 import { useRefreshPageRepos } from '@/features/tracked-repos/hooks/useRefreshPageRepos';
 import { useTrackedReposPage } from '@/features/tracked-repos/hooks/useTrackedReposPage';
-import type { TrackedSortOption } from '@/features/tracked-repos/types';
+import { useTrackedSortParam } from '@/features/tracked-repos/hooks/useTrackedSortParam';
 
 export function TrackedPage() {
-  const [sort, setSort] = useState<TrackedSortOption>(DEFAULT_TRACKED_SORT);
+  const { sort, setSort } = useTrackedSortParam();
   const { repos, page, totalPages, totalCount, setPage } = useTrackedReposPage(sort);
   const { refreshAll, isRefreshing } = useRefreshPageRepos();
 

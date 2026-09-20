@@ -2,7 +2,11 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { formatCompact } from "@repo-radar/ui";
 import { BarChart } from "@mui/x-charts/BarChart";
-import type { BarItemIdentifier } from "@mui/x-charts/models";
+import type {
+  BarItemIdentifier,
+  ChartsActivationEvent,
+  ChartsAxisData,
+} from "@mui/x-charts/models";
 import { useMemo } from "react";
 import { CHART_MARGIN, DEFAULT_CHART_HEIGHT } from "../constants";
 import { resolveClickedBarId } from "../helpers/resolveClickedBarId";
@@ -42,6 +46,20 @@ export function StarsBarChart({
     if (id !== undefined) onBarClick(id);
   };
 
+  // A zero (or near-zero) value renders a bar with no real height, so there's
+  // nothing for `onItemClick`'s rect-based hit testing to catch. `onAxisClick`
+  // fires for the whole column regardless of the bar's rendered height, so it
+  // covers that gap; `onItemClick` above still gives normal bars their precise
+  // hit target and the `cursor: pointer` affordance, which is tied to it alone.
+  const handleAxisClick = (
+    _event: ChartsActivationEvent,
+    axisData: ChartsAxisData | null,
+  ) => {
+    if (onBarClick === undefined || axisData === null) return;
+    const id = resolveClickedBarId(ids, axisData.dataIndex);
+    if (id !== undefined) onBarClick(id);
+  };
+
   if (data.length === 0) {
     return (
       <Stack
@@ -62,7 +80,9 @@ export function StarsBarChart({
         {...(width === undefined ? {} : { width })}
         margin={CHART_MARGIN}
         hideLegend
-        {...(onBarClick === undefined ? {} : { onItemClick: handleItemClick })}
+        {...(onBarClick === undefined
+          ? {}
+          : { onItemClick: handleItemClick, onAxisClick: handleAxisClick })}
         xAxis={[
           {
             scaleType: "band",

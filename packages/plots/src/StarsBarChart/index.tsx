@@ -47,6 +47,9 @@ export function StarsBarChart({
           {
             scaleType: 'band',
             data: axisLabels,
+            // The axis's own height (not the chart margin) is what shortenLabels
+            // uses to fit rotated text; too little and it truncates labels to nothing.
+            height: 60,
             tickLabelStyle: { angle: -35, textAnchor: 'end', fontSize: 12 },
             valueFormatter: (label: string, context) =>
               context.location === 'tooltip'

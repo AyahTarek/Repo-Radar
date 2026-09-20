@@ -31,12 +31,18 @@ export const TrackedRepoCard = memo(function TrackedRepoCard({
   isHighlighted = false,
   highlightToken = 0,
   isPreviewed = false,
+  onHoverChange,
+  onActivate,
 }: {
   repo: TrackedRepo;
   isHighlighted?: boolean;
   highlightToken?: number;
   /** A lighter-weight hover cue tying a chart bar to its card - no scroll, no pulse. */
   isPreviewed?: boolean;
+  /** Reports this card's own hover state outward, for the reverse (card -> chart) link. */
+  onHoverChange?: ((hovering: boolean) => void) | undefined;
+  /** Reports a click anywhere on the card outward, for the reverse (card -> chart) link. */
+  onActivate?: (() => void) | undefined;
 }) {
   const { stats, isLoading, isRefreshing, error, refresh } = useRepoStatsQuery(
     repo.fullName,
@@ -56,6 +62,9 @@ export const TrackedRepoCard = memo(function TrackedRepoCard({
     <AppCard
       component="li"
       id={trackedRepoCardId(repo.fullName)}
+      onMouseEnter={() => onHoverChange?.(true)}
+      onMouseLeave={() => onHoverChange?.(false)}
+      onClick={onActivate}
       sx={{
         transition: "outline-color 300ms ease, background-color 150ms ease",
         outline: "2px solid",

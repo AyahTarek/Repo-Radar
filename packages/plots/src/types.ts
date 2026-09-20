@@ -20,4 +20,6 @@ export type BarChartProps = {
   width?: number | undefined;
   caption?: string | undefined;
   emptyLabel?: string | undefined;
+  /** Called with a datum's `id` when its bar is clicked. Omit for a non-interactive chart. */
+  onBarClick?: ((id: string) => void) | undefined;
 };

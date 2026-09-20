@@ -10,3 +10,6 @@ export const TRACKED_SORT_OPTIONS = [
 export const DEFAULT_TRACKED_SORT = 'recently-tracked';
 
 export const CHART_HEIGHT = 340;
+
+/** Long enough to notice, short enough that it reads as a pulse, not a stuck state. */
+export const HIGHLIGHT_DURATION_MS = 2000;

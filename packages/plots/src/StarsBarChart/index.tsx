@@ -1,11 +1,13 @@
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import { formatCompact } from '@repo-radar/ui';
-import { BarChart } from '@mui/x-charts/BarChart';
-import { useMemo } from 'react';
-import { CHART_MARGIN, DEFAULT_CHART_HEIGHT } from '../constants';
-import { truncateLabel } from '../helpers/truncateLabel';
-import type { BarChartProps } from '../types';
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import { formatCompact } from "@repo-radar/ui";
+import { BarChart } from "@mui/x-charts/BarChart";
+import type { BarItemIdentifier } from "@mui/x-charts/models";
+import { useMemo } from "react";
+import { CHART_MARGIN, DEFAULT_CHART_HEIGHT } from "../constants";
+import { resolveClickedBarId } from "../helpers/resolveClickedBarId";
+import { truncateLabel } from "../helpers/truncateLabel";
+import type { BarChartProps } from "../types";
 
 /**
  * A generic labelled bar chart. It receives BarDatum[] and never knows what the
@@ -17,17 +19,34 @@ export function StarsBarChart({
   height = DEFAULT_CHART_HEIGHT,
   width,
   caption,
-  emptyLabel = 'No data to plot yet.',
+  emptyLabel = "No data to plot yet.",
+  onBarClick,
 }: BarChartProps) {
-  const axisLabels = useMemo(() => data.map((datum) => truncateLabel(datum.label)), [data]);
+  // The band scale's domain must be unique per bar; two tracked repos can share
+  // a short name (e.g. "owner-a/react" and "owner-b/react"), which would collapse
+  // onto one axis slot if the domain were built from the display label instead.
+  const ids = useMemo(() => data.map((datum) => datum.id), [data]);
+  const axisLabels = useMemo(
+    () => data.map((datum) => truncateLabel(datum.label)),
+    [data],
+  );
   const values = useMemo(() => data.map((datum) => datum.value), [data]);
-  const fullLabels = useMemo(() => data.map((datum) => datum.fullLabel ?? datum.label), [data]);
+  const fullLabels = useMemo(
+    () => data.map((datum) => datum.fullLabel ?? datum.label),
+    [data],
+  );
+
+  const handleItemClick = (_event: unknown, item: BarItemIdentifier) => {
+    if (onBarClick === undefined) return;
+    const id = resolveClickedBarId(ids, item.dataIndex);
+    if (id !== undefined) onBarClick(id);
+  };
 
   if (data.length === 0) {
     return (
       <Stack
         component="output"
-        sx={{ height, alignItems: 'center', justifyContent: 'center' }}
+        sx={{ height, alignItems: "center", justifyContent: "center" }}
       >
         <Typography variant="body2" color="text.secondary">
           {emptyLabel}
@@ -43,18 +62,21 @@ export function StarsBarChart({
         {...(width === undefined ? {} : { width })}
         margin={CHART_MARGIN}
         hideLegend
+        {...(onBarClick === undefined ? {} : { onItemClick: handleItemClick })}
         xAxis={[
           {
-            scaleType: 'band',
-            data: axisLabels,
+            scaleType: "band",
+            data: ids,
             // The axis's own height (not the chart margin) is what shortenLabels
             // uses to fit rotated text; too little and it truncates labels to nothing.
             height: 60,
-            tickLabelStyle: { angle: -35, textAnchor: 'end', fontSize: 12 },
-            valueFormatter: (label: string, context) =>
-              context.location === 'tooltip'
-                ? (fullLabels[axisLabels.indexOf(label)] ?? label)
-                : label,
+            tickLabelStyle: { angle: -35, textAnchor: "end", fontSize: 12 },
+            valueFormatter: (id: string, context) => {
+              const index = ids.indexOf(id);
+              return context.location === "tooltip"
+                ? (fullLabels[index] ?? id)
+                : (axisLabels[index] ?? id);
+            },
           },
         ]}
         yAxis={[{ valueFormatter: formatCompact }]}
@@ -63,12 +85,16 @@ export function StarsBarChart({
             data: values,
             label: valueLabel,
             valueFormatter: (value: number | null) =>
-              value === null ? '' : formatCompact(value),
+              value === null ? "" : formatCompact(value),
           },
         ]}
       />
       {caption !== undefined && (
-        <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center' }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ textAlign: "center" }}
+        >
           {caption}
         </Typography>
       )}

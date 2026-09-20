@@ -9,6 +9,7 @@ import { TrackedPagination } from '@/features/tracked-repos/components/TrackedPa
 import { TrackedRepoList } from '@/features/tracked-repos/components/TrackedRepoList';
 import { TrackedToolbar } from '@/features/tracked-repos/components/TrackedToolbar';
 import { useRefreshPageRepos } from '@/features/tracked-repos/hooks/useRefreshPageRepos';
+import { useHighlightedRepo } from '@/features/tracked-repos/hooks/useHighlightedRepo';
 import { useTrackedReposPage } from '@/features/tracked-repos/hooks/useTrackedReposPage';
 import { useTrackedSortParam } from '@/features/tracked-repos/hooks/useTrackedSortParam';
 
@@ -16,6 +17,7 @@ export function TrackedPage() {
   const { sort, setSort } = useTrackedSortParam();
   const { repos, page, totalPages, totalCount, setPage } = useTrackedReposPage(sort);
   const { refreshAll, isRefreshing } = useRefreshPageRepos();
+  const { fullName: highlightedFullName, highlight } = useHighlightedRepo();
 
   if (totalCount === 0) {
     return (
@@ -49,9 +51,9 @@ export function TrackedPage() {
         }
       />
 
-      <StarsChartCard repos={repos} page={page} totalPages={totalPages} />
+      <StarsChartCard repos={repos} page={page} totalPages={totalPages} onBarClick={highlight} />
 
-      <TrackedRepoList repos={repos} />
+      <TrackedRepoList repos={repos} highlightedFullName={highlightedFullName} />
 
       <TrackedPagination page={page} totalPages={totalPages} onPageChange={setPage} />
     </Stack>

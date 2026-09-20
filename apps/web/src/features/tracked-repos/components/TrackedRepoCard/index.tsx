@@ -13,8 +13,9 @@ import {
   InlineSpinnerButton,
   StatTile,
 } from "@repo-radar/ui";
-import { memo } from "react";
+import { memo, useEffect } from "react";
 import { RelativeDate } from "@/components/RelativeDate";
+import { trackedRepoCardId } from "../../helpers/trackedRepoCardId";
 import { useRepoStatsQuery } from "../../hooks/useRepoStatsQuery";
 import type { TrackedRepo } from "../../types";
 import { TrackToggleButton } from "../TrackToggleButton";
@@ -27,15 +28,34 @@ const STAT_SKELETON_WIDTH = 72;
  */
 export const TrackedRepoCard = memo(function TrackedRepoCard({
   repo,
+  isHighlighted = false,
 }: {
   repo: TrackedRepo;
+  isHighlighted?: boolean;
 }) {
   const { stats, isLoading, isRefreshing, error, refresh } = useRepoStatsQuery(
     repo.fullName,
   );
 
+  // Runs only on the rising edge (a click), not while the highlight is fading out.
+  useEffect(() => {
+    if (!isHighlighted) return;
+    document
+      .getElementById(trackedRepoCardId(repo.fullName))
+      ?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [isHighlighted, repo.fullName]);
+
   return (
-    <AppCard component="li">
+    <AppCard
+      component="li"
+      id={trackedRepoCardId(repo.fullName)}
+      sx={{
+        transition: "outline-color 300ms ease",
+        outline: "2px solid",
+        outlineOffset: 2,
+        outlineColor: isHighlighted ? "primary.main" : "transparent",
+      }}
+    >
       <Stack
         direction="row"
         spacing={1}

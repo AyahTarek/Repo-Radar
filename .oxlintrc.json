@@ -23,7 +23,7 @@
   },
   "overrides": [
     {
-      "files": ["**/vite.config.ts", "**/vitest.config.ts", "**/.storybook/*.ts", "**/.storybook/*.tsx", "**/*.stories.tsx"],
+      "files": ["**/vite.config.ts", "**/vitest.config.ts", "**/playwright.config.ts", "**/.storybook/*.ts", "**/.storybook/*.tsx", "**/*.stories.tsx"],
       "rules": {
         "import/no-default-export": "off"
       }

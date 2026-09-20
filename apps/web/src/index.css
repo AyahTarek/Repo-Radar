@@ -1,0 +1,12 @@
+/* MUI's CssBaseline handles resets and palette-driven colours; this file only
+   carries what has to exist before React mounts. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Keep the sticky header from covering an anchored element. */
+:target {
+  scroll-margin-top: 5rem;
+}

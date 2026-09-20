@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router';
-import { SEARCH_PARAM_KEYS } from '@/app/router/routes';
-import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { DEBOUNCE_MS, MAX_QUERY_LENGTH } from '../constants';
-import { parseQueryParam, parseSortParam } from '../helpers/searchParams';
-import type { RepoSortOption } from '../types';
+import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "react-router";
+import { SEARCH_PARAM_KEYS } from "@/app/router/routes";
+import { STORAGE_KEYS } from "@/constants/storage";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { DEBOUNCE_MS, MAX_QUERY_LENGTH } from "../constants";
+import { parseQueryParam, parseSortParam } from "../helpers/searchParams";
+import type { RepoSortOption } from "../types";
 
 type SearchQueryState = {
   /** What the input shows - updates on every keystroke. */
@@ -23,10 +24,19 @@ type SearchQueryState = {
 export function useSearchQueryParam(): SearchQueryState {
   const [searchParams, setSearchParams] = useSearchParams();
   const urlQuery = parseQueryParam(searchParams.get(SEARCH_PARAM_KEYS.query));
-  const sort = parseSortParam(searchParams.get(SEARCH_PARAM_KEYS.sort));
+  // Falling back to the last sort picked on this page - not the hard default -
+  // is what makes the choice survive leaving the page and coming back, since
+  // the nav links themselves carry no query string.
+  const sort = parseSortParam(
+    searchParams.get(SEARCH_PARAM_KEYS.sort) ??
+      localStorage.getItem(STORAGE_KEYS.searchSort),
+  );
 
   const [inputValue, setInputValue] = useState(urlQuery);
-  const debouncedQuery = useDebouncedValue(inputValue.trim().slice(0, MAX_QUERY_LENGTH), DEBOUNCE_MS);
+  const debouncedQuery = useDebouncedValue(
+    inputValue.trim().slice(0, MAX_QUERY_LENGTH),
+    DEBOUNCE_MS,
+  );
 
   // Writing the settled value with `replace` keeps one history entry per search
   // instead of one per keystroke.
@@ -51,6 +61,7 @@ export function useSearchQueryParam(): SearchQueryState {
 
   const setSort = useCallback(
     (nextSort: RepoSortOption) => {
+      localStorage.setItem(STORAGE_KEYS.searchSort, nextSort);
       setSearchParams(
         (current) => {
           const next = new URLSearchParams(current);

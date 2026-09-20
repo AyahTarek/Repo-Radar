@@ -1,8 +1,9 @@
-import { useCallback } from 'react';
-import { useSearchParams } from 'react-router';
-import { SEARCH_PARAM_KEYS } from '@/app/router/routes';
-import { parseTrackedSortParam } from '../helpers/sortParam';
-import type { TrackedSortOption } from '../types';
+import { useCallback } from "react";
+import { useSearchParams } from "react-router";
+import { SEARCH_PARAM_KEYS } from "@/app/router/routes";
+import { STORAGE_KEYS } from "@/constants/storage";
+import { parseTrackedSortParam } from "../helpers/sortParam";
+import type { TrackedSortOption } from "../types";
 
 type TrackedSortParam = {
   sort: TrackedSortOption;
@@ -16,10 +17,17 @@ type TrackedSortParam = {
  */
 export function useTrackedSortParam(): TrackedSortParam {
   const [searchParams, setSearchParams] = useSearchParams();
-  const sort = parseTrackedSortParam(searchParams.get(SEARCH_PARAM_KEYS.sort));
+  // Falling back to the last sort picked on this page - not the hard default -
+  // is what makes the choice survive leaving the page and coming back, since
+  // the nav links themselves carry no query string.
+  const sort = parseTrackedSortParam(
+    searchParams.get(SEARCH_PARAM_KEYS.sort) ??
+      localStorage.getItem(STORAGE_KEYS.trackedSort),
+  );
 
   const setSort = useCallback(
     (nextSort: TrackedSortOption) => {
+      localStorage.setItem(STORAGE_KEYS.trackedSort, nextSort);
       setSearchParams(
         (current) => {
           const next = new URLSearchParams(current);

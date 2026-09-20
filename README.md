@@ -6,9 +6,51 @@ stars, open issues and last commit date with per-repo and bulk refresh.
 - Debounced search with infinite scroll (and a keyboard-accessible `Load more`)
 - Track / untrack, persisted in `localStorage` and restored on reload
 - Independent loading, error and retry state per tracked repository
-- Bar chart of stars across the tracked repositories on the current page
+- Bar chart of stars across the tracked repositories on the current page - click a bar to scroll to
+  and pulse-highlight its card, hover for a lighter preview (see [Hover vs. click](#hover-vs-click))
 - Dark and light themes, dark by default, persisted
 - Visible GitHub rate-limit status instead of silent failures
+
+## Requirements coverage
+
+Required tech - **React 19 + TypeScript, Zustand, MUI, the GitHub REST API, deployed on Vercel** - all
+in use; see `package.json` and `vercel.json`.
+
+Core requirements, each with where it lives:
+
+| Requirement | Where |
+| --- | --- |
+| Debounced GitHub repository search | `useDebouncedValue`, `features/repo-search` |
+| Track / untrack repositories | `features/tracked-repos/store` (Zustand) |
+| Tracked Repos view | `/tracked`, `pages/TrackedPage` |
+| Stars, open issues, last commit date | `TrackedRepoCard` (`pushed_at` stands in for last commit date - see [Assumptions](#assumptions)) |
+| Refresh individual and/or all repos | per-card `refetch`, `refreshAll` via `invalidateQueries` |
+| Independent loading/error state per repo | one React Query key per repo - see [§2](#2-independent-per-repo-state-falls-out-of-the-data-model) |
+| Persist tracked repos in `localStorage` | Zustand `persist` middleware, with schema-validated rehydration |
+| Proper TypeScript types | Zod schemas + `z.infer` at every boundary - see [§4](#4-validation-at-every-untrusted-boundary) |
+| Bar chart of stars per tracked repository | `StarsBarChart`, `packages/plots` |
+
+### Beyond the brief
+
+Suggested-but-optional additions named in the brief, all included:
+
+- **Monorepo** with `packages/ui` and `packages/plots` split out from the app.
+- **Storybook** - 7 stories across both shared packages (see [Take-home scope vs. production](#take-home-scope-vs-production)
+  for what it doesn't cover).
+- **Theme switching** - dark/light, persisted, no flash on load.
+
+Other enhancements added beyond what was asked:
+
+- Click-to-highlight (scroll + pulse) and hover-preview linking between the chart and its matching
+  card - see [Hover vs. click](#hover-vs-click).
+- GitHub rate-limit visibility - a banner plus a typed, kind-aware retry policy, instead of raw
+  fetch failures.
+- URL-persisted search query and sort, so a link is shareable and a reload doesn't lose your place.
+- 107 vitest tests, a Playwright e2e suite, and `vitest-axe` accessibility assertions - see
+  [§8](#8-testing).
+- GitHub Actions CI (lint/typecheck/test/build/e2e) gating `main` - see
+  [Continuous Integration](#continuous-integration).
+- A Husky + lint-staged pre-commit hook - see [Pre-commit hook](#pre-commit-hook).
 
 ## Getting started
 
@@ -28,6 +70,11 @@ pnpm lint           # oxlint across the whole workspace
 pnpm typecheck      # tsc in every package
 pnpm test           # vitest in every package
 pnpm verify         # lint + typecheck + test + build
+pnpm storybook      # component playground for packages/ui and packages/plots, on :6006
+
+# from apps/web, or `pnpm --filter web <script>` from the root:
+pnpm test:e2e:install  # one-time Playwright browser install
+pnpm test:e2e          # Playwright end-to-end smoke tests
 ```
 
 ### Pre-commit hook
@@ -57,7 +104,7 @@ fix is a small server-side proxy holding the token; that is out of scope here an
 ## Architecture
 
 ```
-siemens-task/
+repo-radar/
 ├─ packages/ui/            @repo-radar/ui    - theme, theming mechanism, presentational primitives
 ├─ packages/plots/         @repo-radar/plots - charts, no GitHub knowledge
 └─ apps/web/               the application
@@ -201,10 +248,12 @@ list would only justify a virtualiser after several hundred rows.
 
 ### 8. Testing
 
-87 tests across the three packages, aimed at logic and behaviour rather than markup.
+107 vitest tests across the three packages plus a Playwright end-to-end suite, aimed at logic and
+behaviour rather than markup.
 
 ```bash
-pnpm test
+pnpm test                    # vitest, all packages - runs in CI on every push
+pnpm --filter web test:e2e   # Playwright - runs in CI, needs a browser install locally first
 ```
 
 - `lib/github/client` - a stubbed `fetch` covers success, quota recording, the 403-with-quota vs
@@ -218,8 +267,53 @@ pnpm test
 - Components - `SearchResults` (one request per settled query, appending a page, tracking from the
   list, error with retry) and `TrackedRepoCard` (snapshot first, then stats, error to retry to
   success, on-demand refresh, untrack).
+- Chart-to-card highlight - the click handler resolves the right datum by id (not array index), a
+  repeat click on the same bar restarts the highlight timer instead of silently doing nothing, and a
+  zero-value bar's whole axis column is clickable, not just its (invisible) rendered rect.
 - `packages/ui` - `useThemeMode` throws outside its provider and the toggle reports the opposite mode,
   with no storage mocking needed.
+- **Accessibility** - `SearchPage` and `TrackedPage` are each rendered fully and checked with
+  `vitest-axe`'s `axe()` for violations, catching issues real users of assistive tech would hit that
+  unit tests of individual components would miss (e.g. duplicate landmarks, missing accessible names
+  that only appear once pieces are composed together).
+- **End-to-end** (`apps/web/e2e`, Playwright, mocked GitHub API so it's deterministic and free) -
+  search -> track -> see the repo and its chart on the tracked page; and clicking a chart bar
+  highlights only its matching card, proving the dataIndex -> id mapping end to end rather than at
+  the unit level.
+
+## Continuous Integration
+
+GitHub Actions (`.github/workflows/ci.yml`) runs on every push to `main` and every pull request:
+
+```
+lint -> typecheck -> test -> build -> install Playwright browsers -> e2e
+```
+
+Same commands as local (`pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`), plus the Playwright
+suite - CI can't reuse a developer machine's already-installed browser, so that step is explicit and
+cached separately by `actions/setup-node`'s pnpm cache. A new push to the same branch or PR cancels
+the run already in progress for it, so pushing twice in a row doesn't burn double the CI minutes. The
+Playwright HTML report is uploaded as an artifact on every run, including failures, so a red CI run is
+debuggable without reproducing it locally first.
+
+## Hover vs. click
+
+I'd keep click. Hover has real downsides here:
+
+- **Touch/mobile**: there's no hover state at all, so the feature would silently disappear on touch
+  devices.
+- **Accessibility**: hover-triggered UI changes are a WCAG concern (2.5 SC 1.4.13-adjacent issues)
+  since keyboard/screen-reader users can't "hover."
+- **Noise**: a chart with several bars would flicker every card highlight as the mouse passes over on
+  its way elsewhere, rather than reflecting deliberate intent.
+- Click also matches what we already tested end-to-end and is the more common convention for
+  chart-to-list linking (e.g. dashboards).
+
+What's shipped reflects that: click is the only way to *trigger* the highlight (scroll + a 2s pulse),
+and hover is a secondary, purely decorative preview layered on top (a background tint on the matching
+card, no scroll, no pulse). None of the downsides above apply to that preview, because it never carries
+functionality click doesn't already provide - a touch or keyboard user loses nothing by never seeing
+it, and a plain, motionless tint can't read as flicker the way a scroll-and-pulse would.
 
 ## Deployment
 
@@ -246,7 +340,9 @@ Import the repository into Vercel, keep the root directory as the repository roo
 - **The repo endpoint is the source of truth for stats.** Search results carry a star count too, but it
   is less fresh, so tracked cards always fetch their own.
 - Only fields the store already holds are sortable in the tracked view (recently tracked, name), so
-  sorting never has to wait on a request for off-page repos.
+  sorting never has to wait on a request for off-page repos. "Name (A-Z)" sorts by the full
+  `owner/name` (what the list displays), not by the short name the chart shows on its x-axis - the
+  chart label is a display-only shorthand and carries no identity or ordering of its own.
 - English locale formatting throughout (`Intl.NumberFormat`, `Intl.RelativeTimeFormat`); no i18n layer.
 - **The quota shown is whichever GitHub reported last.** Search and the repo endpoint have separate
   budgets (10/minute vs 60/hour unauthenticated), so the banner's numbers change depending on which
@@ -267,3 +363,35 @@ Import the repository into Vercel, keep the root directory as the repository roo
 - **A client-side token is inherently public.** A server-side proxy is the real fix.
 - No i18n, no authentication, and no offline support beyond what the query cache and persisted
   watchlist provide.
+
+## Take-home scope vs. production
+
+Decisions below make sense for a timed assessment and would be revisited at a larger scale or for a
+real deployment:
+
+- **Client-side GitHub token.** Fine for review; production needs the server-side proxy noted above so
+  the token - and any higher-scoped one - never reaches the browser.
+- **Full-workspace typecheck in the pre-commit hook.** Cheap at three small packages (well under 2s,
+  see [Pre-commit hook](#pre-commit-hook)); a larger monorepo would move it to CI-only or scope it with
+  change-aware tooling (Nx/Turborepo affected-graph) and keep the hook itself lint-only.
+- **Storybook covers the two shared packages, not the app.** `pnpm storybook` has stories for every
+  `packages/ui` primitive and `StarsBarChart` in `packages/plots` (7 stories total), but nothing under
+  `apps/web` - page-level composition is exercised by its own component/e2e tests instead, since a
+  story for a data-fetching page would need the same mocking either way.
+- **Test depth targets confidence, not a coverage percentage.** 107 vitest tests plus a Playwright
+  suite cover the logic that's actually tricky - the retry policy, pagination edges, persisted-state
+  recovery, the chart-to-card highlight timing bug fixed mid-project - rather than every component in
+  isolation. There's no visual regression or load testing.
+- **No error tracking, analytics or performance monitoring** (Sentry, Web Vitals reporting, etc.).
+  Errors are surfaced to the user in the moment but nothing is recorded once they navigate away -
+  unacceptable for production, unnecessary for a local review.
+- **CI gates `main`, it doesn't gate the deploy.** `ci.yml` runs lint/typecheck/test/build/e2e; Vercel
+  deploys on its own trigger, independently. Production would make the deploy depend on that pipeline
+  (or at minimum a required-status-check branch rule), and run the e2e suite against the actual preview
+  URL rather than a local dev server.
+- **Rate-limit handling is best-effort, not eliminated.** The banner and typed retry policy make the
+  unauthenticated limits usable for review; a production service would front GitHub with its own
+  caching layer so user-facing requests never touch GitHub's quota directly.
+- **Single locale, single anonymous user, by design for this scope.** Both i18n and
+  authentication/multi-user support are additive rather than architectural changes given the
+  validation-at-every-boundary and store patterns already in place - see [Assumptions](#assumptions).

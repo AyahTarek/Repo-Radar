@@ -1,6 +1,6 @@
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import type { ReactNode } from 'react';
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import type { ReactNode } from "react";
 
 export type SectionHeaderProps = {
   title: string;
@@ -12,11 +12,11 @@ export type SectionHeaderProps = {
 export function SectionHeader({ title, subtitle, action }: SectionHeaderProps) {
   return (
     <Stack
-      direction={{ xs: 'column', sm: 'row' }}
+      direction={{ xs: "column", sm: "row" }}
       spacing={1.5}
       sx={{
-        justifyContent: 'space-between',
-        alignItems: { xs: 'stretch', sm: 'center' },
+        justifyContent: "space-between",
+        alignItems: { xs: "stretch", sm: "center" },
       }}
     >
       <Stack spacing={0.25} sx={{ minWidth: 0 }}>

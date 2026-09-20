@@ -1,18 +1,23 @@
-import BugReportIcon from '@mui/icons-material/BugReportOutlined';
-import CommitIcon from '@mui/icons-material/CommitOutlined';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import StarIcon from '@mui/icons-material/StarBorder';
-import Button from '@mui/material/Button';
-import Link from '@mui/material/Link';
-import Skeleton from '@mui/material/Skeleton';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import { AppCard, formatCompact, InlineSpinnerButton, StatTile } from '@repo-radar/ui';
-import { memo } from 'react';
-import { RelativeDate } from '@/components/RelativeDate';
-import { useRepoStatsQuery } from '../../hooks/useRepoStatsQuery';
-import type { TrackedRepo } from '../../types';
-import { TrackToggleButton } from '../TrackToggleButton';
+import BugReportIcon from "@mui/icons-material/BugReportOutlined";
+import CommitIcon from "@mui/icons-material/CommitOutlined";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import StarIcon from "@mui/icons-material/StarBorder";
+import Button from "@mui/material/Button";
+import Link from "@mui/material/Link";
+import Skeleton from "@mui/material/Skeleton";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import {
+  AppCard,
+  formatCompact,
+  InlineSpinnerButton,
+  StatTile,
+} from "@repo-radar/ui";
+import { memo } from "react";
+import { RelativeDate } from "@/components/RelativeDate";
+import { useRepoStatsQuery } from "../../hooks/useRepoStatsQuery";
+import type { TrackedRepo } from "../../types";
+import { TrackToggleButton } from "../TrackToggleButton";
 
 const STAT_SKELETON_WIDTH = 72;
 
@@ -20,19 +25,29 @@ const STAT_SKELETON_WIDTH = 72;
  * Each card owns its own query, so its loading, error and retry states are fully
  * independent of every other card on the page.
  */
-export const TrackedRepoCard = memo(function TrackedRepoCard({ repo }: { repo: TrackedRepo }) {
-  const { stats, isLoading, isRefreshing, error, refresh } = useRepoStatsQuery(repo.fullName);
+export const TrackedRepoCard = memo(function TrackedRepoCard({
+  repo,
+}: {
+  repo: TrackedRepo;
+}) {
+  const { stats, isLoading, isRefreshing, error, refresh } = useRepoStatsQuery(
+    repo.fullName,
+  );
 
   return (
     <AppCard component="li">
-      <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between' }}>
-        <Stack spacing={0.5} sx={{ minWidth: 0 }}>
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{ justifyContent: "space-between", alignItems: "flex-start" }}
+      >
+        <Stack spacing={0.5} sx={{ flex: "1 1 auto", minWidth: 0 }}>
           <Link
             href={repo.htmlUrl}
             target="_blank"
             rel="noopener noreferrer"
             variant="h3"
-            sx={{ wordBreak: 'break-word' }}
+            sx={{ wordBreak: "break-word" }}
           >
             {repo.fullName}
           </Link>
@@ -43,7 +58,11 @@ export const TrackedRepoCard = memo(function TrackedRepoCard({ repo }: { repo: T
           )}
         </Stack>
 
-        <Stack direction="row" spacing={0.5} sx={{ alignItems: 'flex-start' }}>
+        <Stack
+          direction="row"
+          spacing={0.5}
+          sx={{ alignItems: "flex-start", flexShrink: 0 }}
+        >
           <InlineSpinnerButton
             label={`Refresh ${repo.fullName}`}
             icon={<RefreshIcon fontSize="small" />}
@@ -60,7 +79,7 @@ export const TrackedRepoCard = memo(function TrackedRepoCard({ repo }: { repo: T
           direction="row"
           spacing={1}
           role="alert"
-          sx={{ alignItems: 'center', flexWrap: 'wrap', mt: 'auto' }}
+          sx={{ alignItems: "center", flexWrap: "wrap", mt: "auto" }}
         >
           <Typography variant="body2" color="error.main">
             {error.message}
@@ -70,7 +89,11 @@ export const TrackedRepoCard = memo(function TrackedRepoCard({ repo }: { repo: T
           </Button>
         </Stack>
       ) : (
-        <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', rowGap: 0.5, mt: 'auto' }}>
+        <Stack
+          direction="row"
+          spacing={2}
+          sx={{ flexWrap: "wrap", rowGap: 0.5, mt: "auto" }}
+        >
           {isLoading || stats === undefined ? (
             <Skeleton variant="text" width={STAT_SKELETON_WIDTH * 3} />
           ) : (

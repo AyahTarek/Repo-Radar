@@ -1,5 +1,5 @@
-import type { RepoIdentity } from '@/types/repo';
-import type { TRACKED_SORT_OPTIONS } from '../constants';
+import type { RepoIdentity } from "@/types/repo";
+import type { CHART_METRIC_OPTIONS, TRACKED_SORT_OPTIONS } from "../constants";
 
 /**
  * The persisted snapshot. It holds everything needed to render a tracked repo
@@ -17,6 +17,8 @@ export type TrackedRepo = RepoIdentity & {
  * already-tracked repo satisfy it, which is what lets one toggle button serve
  * both views without either feature knowing about the other's types.
  */
-export type TrackableRepo = Omit<TrackedRepo, 'trackedAt'>;
+export type TrackableRepo = Omit<TrackedRepo, "trackedAt">;
 
-export type TrackedSortOption = (typeof TRACKED_SORT_OPTIONS)[number]['value'];
+export type TrackedSortOption = (typeof TRACKED_SORT_OPTIONS)[number]["value"];
+
+export type ChartMetric = (typeof CHART_METRIC_OPTIONS)[number]["value"];

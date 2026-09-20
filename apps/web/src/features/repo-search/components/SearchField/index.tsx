@@ -32,6 +32,9 @@ export function SearchField({
         placeholder="e.g. react, owner/name, topic:cli"
         fullWidth
         type="search"
+        // Suppresses the browser's own remembered-value dropdown, which duplicates
+        // this field's own debounced search and URL persistence.
+        autoComplete="off"
         slotProps={{
           input: {
             startAdornment: (

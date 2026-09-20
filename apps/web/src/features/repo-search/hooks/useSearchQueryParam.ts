@@ -59,6 +59,21 @@ export function useSearchQueryParam(): SearchQueryState {
     );
   }, [debouncedQuery, urlQuery, setSearchParams]);
 
+  // The localStorage fallback only affects what `sort` resolves to in memory;
+  // without this, the address bar would silently disagree with what's on screen.
+  useEffect(() => {
+    if (searchParams.get(SEARCH_PARAM_KEYS.sort) !== null) return;
+
+    setSearchParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.set(SEARCH_PARAM_KEYS.sort, sort);
+        return next;
+      },
+      { replace: true },
+    );
+  }, [searchParams, sort, setSearchParams]);
+
   const setSort = useCallback(
     (nextSort: RepoSortOption) => {
       localStorage.setItem(STORAGE_KEYS.searchSort, nextSort);

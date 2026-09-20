@@ -5,6 +5,13 @@ packages:
 # Never block a scripted install waiting for a TTY confirmation.
 confirmModulesPurge: false
 
+# pnpm blocks dependency lifecycle scripts by default (supply-chain safety) and,
+# unlike a local install, CI has no TTY to prompt for approval - it fails outright
+# instead. esbuild's install script only fetches its own platform binary, so it's
+# safe to allow explicitly rather than disabling the protection workspace-wide.
+onlyBuiltDependencies:
+  - esbuild
+
 # Single source of truth for every third-party version in the monorepo.
 # Workspace packages reference these with "catalog:" so two packages can never
 # drift onto different React or MUI versions.

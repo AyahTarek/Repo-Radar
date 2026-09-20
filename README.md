@@ -30,6 +30,15 @@ pnpm test           # vitest in every package
 pnpm verify         # lint + typecheck + test + build
 ```
 
+### Pre-commit hook
+
+Husky + lint-staged run on every commit: oxlint on staged `.js/.jsx/.ts/.tsx` files, plus a full
+`pnpm -w typecheck` whenever a staged file is `.ts`/`.tsx`. The typecheck runs on the whole workspace
+rather than just the staged files because `tsc`'s project references need the whole program - a
+partial file list can't be checked in isolation. In practice this adds well under 2 seconds to a
+commit (three small projects), so it stays in the hook rather than CI-only; reassess if the repo grows
+enough for that to change. Skip it for an emergency commit with `git commit --no-verify`.
+
 ### Optional GitHub token
 
 The app works with no configuration, using GitHub's unauthenticated limits of **60 requests/hour**

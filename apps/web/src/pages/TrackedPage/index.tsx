@@ -2,6 +2,7 @@ import BookmarksIcon from '@mui/icons-material/BookmarksOutlined';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import { SectionHeader, StateBlock } from '@repo-radar/ui';
+import { useState } from 'react';
 import { Link as RouterLink } from 'react-router';
 import { ROUTES } from '@/app/router/routes';
 import { StarsChartCard } from '@/features/tracked-repos/components/StarsChartCard';
@@ -18,6 +19,7 @@ export function TrackedPage() {
   const { repos, page, totalPages, totalCount, setPage } = useTrackedReposPage(sort);
   const { refreshAll, isRefreshing } = useRefreshPageRepos();
   const { fullName: highlightedFullName, token: highlightToken, highlight } = useHighlightedRepo();
+  const [hoveredFullName, setHoveredFullName] = useState<string | null>(null);
 
   if (totalCount === 0) {
     return (
@@ -51,12 +53,19 @@ export function TrackedPage() {
         }
       />
 
-      <StarsChartCard repos={repos} page={page} totalPages={totalPages} onBarClick={highlight} />
+      <StarsChartCard
+        repos={repos}
+        page={page}
+        totalPages={totalPages}
+        onBarClick={highlight}
+        onBarHover={setHoveredFullName}
+      />
 
       <TrackedRepoList
         repos={repos}
         highlightedFullName={highlightedFullName}
         highlightToken={highlightToken}
+        hoveredFullName={hoveredFullName}
       />
 
       <TrackedPagination page={page} totalPages={totalPages} onPageChange={setPage} />

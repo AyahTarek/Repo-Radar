@@ -3,6 +3,7 @@ import Typography from "@mui/material/Typography";
 import { formatCompact } from "@repo-radar/ui";
 import { BarChart } from "@mui/x-charts/BarChart";
 import type {
+  AxisItemIdentifier,
   BarItemIdentifier,
   ChartsActivationEvent,
   ChartsAxisData,
@@ -25,6 +26,7 @@ export function StarsBarChart({
   caption,
   emptyLabel = "No data to plot yet.",
   onBarClick,
+  onBarHover,
 }: BarChartProps) {
   // The band scale's domain must be unique per bar; two tracked repos can share
   // a short name (e.g. "owner-a/react" and "owner-b/react"), which would collapse
@@ -60,6 +62,21 @@ export function StarsBarChart({
     if (id !== undefined) onBarClick(id);
   };
 
+  // Bar-item hover state (`onHighlightChange`) is driven by pointer events on the
+  // rendered bar rect itself, so it has the same blind spot as `onItemClick` for a
+  // zero-height bar. `onHighlightedAxisChange` instead follows the same column-wide
+  // pointer tracking as `onAxisClick`, so the preview works for zero-value bars too.
+  const handleHighlightedAxisChange = (axisItems: readonly AxisItemIdentifier[]) => {
+    if (onBarHover === undefined) return;
+    const [axisItem] = axisItems;
+    if (axisItem === undefined) {
+      onBarHover(null);
+      return;
+    }
+    const id = resolveClickedBarId(ids, axisItem.dataIndex);
+    onBarHover(id ?? null);
+  };
+
   if (data.length === 0) {
     return (
       <Stack
@@ -83,6 +100,9 @@ export function StarsBarChart({
         {...(onBarClick === undefined
           ? {}
           : { onItemClick: handleItemClick, onAxisClick: handleAxisClick })}
+        {...(onBarHover === undefined
+          ? {}
+          : { onHighlightedAxisChange: handleHighlightedAxisChange })}
         xAxis={[
           {
             scaleType: "band",

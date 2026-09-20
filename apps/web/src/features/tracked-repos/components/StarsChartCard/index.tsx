@@ -12,9 +12,11 @@ export type StarsChartCardProps = {
   totalPages: number;
   /** Called with a repo's `fullName` when its bar is clicked. */
   onBarClick?: ((fullName: string) => void) | undefined;
+  /** Called with a repo's `fullName` on hover, and `undefined` on hover-out. */
+  onBarHover?: ((fullName: string | null) => void) | undefined;
 };
 
-export function StarsChartCard({ repos, page, totalPages, onBarClick }: StarsChartCardProps) {
+export function StarsChartCard({ repos, page, totalPages, onBarClick, onBarHover }: StarsChartCardProps) {
   const data = useStarsChartData(repos);
 
   return (
@@ -30,6 +32,7 @@ export function StarsChartCard({ repos, page, totalPages, onBarClick }: StarsCha
           caption={totalPages > 1 ? `Page ${page} of ${totalPages}` : undefined}
           emptyLabel="Waiting for repository stats."
           onBarClick={onBarClick}
+          onBarHover={onBarHover}
         />
       </Stack>
     </AppCard>

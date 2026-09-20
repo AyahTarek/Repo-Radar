@@ -30,10 +30,13 @@ export const TrackedRepoCard = memo(function TrackedRepoCard({
   repo,
   isHighlighted = false,
   highlightToken = 0,
+  isPreviewed = false,
 }: {
   repo: TrackedRepo;
   isHighlighted?: boolean;
   highlightToken?: number;
+  /** A lighter-weight hover cue tying a chart bar to its card - no scroll, no pulse. */
+  isPreviewed?: boolean;
 }) {
   const { stats, isLoading, isRefreshing, error, refresh } = useRepoStatsQuery(
     repo.fullName,
@@ -54,10 +57,11 @@ export const TrackedRepoCard = memo(function TrackedRepoCard({
       component="li"
       id={trackedRepoCardId(repo.fullName)}
       sx={{
-        transition: "outline-color 300ms ease",
+        transition: "outline-color 300ms ease, background-color 150ms ease",
         outline: "2px solid",
         outlineOffset: 2,
         outlineColor: isHighlighted ? "primary.main" : "transparent",
+        backgroundColor: isPreviewed ? "action.hover" : undefined,
       }}
     >
       <Stack

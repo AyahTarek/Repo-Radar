@@ -22,4 +22,6 @@ export type BarChartProps = {
   emptyLabel?: string | undefined;
   /** Called with a datum's `id` when its bar is clicked. Omit for a non-interactive chart. */
   onBarClick?: ((id: string) => void) | undefined;
+  /** Called with a datum's `id` on hover, and `null` on hover-out. Omit for no hover preview. */
+  onBarHover?: ((id: string | null) => void) | undefined;
 };

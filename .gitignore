@@ -12,6 +12,8 @@ coverage
 
 .pnpm-store
 
+storybook-static
+
 .env
 .env.*
 !.env.example

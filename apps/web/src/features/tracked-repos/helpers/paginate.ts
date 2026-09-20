@@ -1,12 +1,19 @@
-import { FIRST_PAGE, PAGE_SIZE } from '@/constants/pagination';
-import type { TrackedRepo, TrackedSortOption } from '../types';
+import { FIRST_PAGE, PAGE_SIZE } from "@/constants/pagination";
+import type { TrackedRepo, TrackedSortOption } from "../types";
 
-export function pageCount(totalItems: number, pageSize: number = PAGE_SIZE): number {
+export function pageCount(
+  totalItems: number,
+  pageSize: number = PAGE_SIZE,
+): number {
   // An empty list still has one (empty) page, so the pager never renders "page 1 of 0".
   return Math.max(FIRST_PAGE, Math.ceil(totalItems / pageSize));
 }
 
-export function clampPage(page: number, totalItems: number, pageSize: number = PAGE_SIZE): number {
+export function clampPage(
+  page: number,
+  totalItems: number,
+  pageSize: number = PAGE_SIZE,
+): number {
   return Math.min(Math.max(page, FIRST_PAGE), pageCount(totalItems, pageSize));
 }
 
@@ -27,7 +34,10 @@ const SORT_COMPARATORS: Record<
   (left: TrackedRepo, right: TrackedRepo) => number
 > = {
   // ISO timestamps compare correctly as strings, newest first.
-  'recently-tracked': (left, right) => right.trackedAt.localeCompare(left.trackedAt),
+  "recently-tracked": (left, right) =>
+    right.trackedAt.localeCompare(left.trackedAt),
+  // fullName is what the list displays, so "Name (A-Z)" must sort by it, not by
+  // the shorter name the chart shows - only the list's own text needs to match its own order.
   name: (left, right) => left.fullName.localeCompare(right.fullName),
 };
 

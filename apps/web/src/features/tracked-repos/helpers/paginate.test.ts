@@ -1,13 +1,13 @@
-import { describe, expect, it } from 'vitest';
-import { PAGE_SIZE } from '@/constants/pagination';
-import { clampPage, pageCount, pageSlice, sortTrackedRepos } from './paginate';
-import type { TrackedRepo } from '../types';
+import { describe, expect, it } from "vitest";
+import { PAGE_SIZE } from "@/constants/pagination";
+import { clampPage, pageCount, pageSlice, sortTrackedRepos } from "./paginate";
+import type { TrackedRepo } from "../types";
 
 function tracked(name: string, trackedAt: string): TrackedRepo {
   return {
     id: name.length,
     fullName: `owner/${name}`,
-    owner: 'owner',
+    owner: "owner",
     name,
     htmlUrl: `https://github.com/owner/${name}`,
     description: null,
@@ -18,12 +18,12 @@ function tracked(name: string, trackedAt: string): TrackedRepo {
 
 const items = Array.from({ length: 32 }, (_, index) => index);
 
-describe('pageCount', () => {
-  it('counts a partial last page', () => {
+describe("pageCount", () => {
+  it("counts a partial last page", () => {
     expect(pageCount(PAGE_SIZE * 2 + 1)).toBe(3);
   });
 
-  it('does not add an empty page for an exact multiple', () => {
+  it("does not add an empty page for an exact multiple", () => {
     expect(pageCount(PAGE_SIZE * 2)).toBe(2);
   });
 
@@ -32,54 +32,71 @@ describe('pageCount', () => {
   });
 });
 
-describe('clampPage', () => {
-  it('pulls out-of-range pages back inside', () => {
+describe("clampPage", () => {
+  it("pulls out-of-range pages back inside", () => {
     expect(clampPage(999, PAGE_SIZE * 2)).toBe(2);
     expect(clampPage(0, PAGE_SIZE * 2)).toBe(1);
     expect(clampPage(-5, PAGE_SIZE * 2)).toBe(1);
   });
 
-  it('clamps to page 1 when the list empties out', () => {
+  it("clamps to page 1 when the list empties out", () => {
     expect(clampPage(3, 0)).toBe(1);
   });
 });
 
-describe('pageSlice', () => {
-  it('returns at most a full page', () => {
+describe("pageSlice", () => {
+  it("returns at most a full page", () => {
     expect(pageSlice(items, 1)).toHaveLength(PAGE_SIZE);
     expect(pageSlice(items, 1).at(0)).toBe(0);
   });
 
-  it('offsets by page', () => {
+  it("offsets by page", () => {
     expect(pageSlice(items, 2).at(0)).toBe(PAGE_SIZE);
   });
 
-  it('returns the remainder on the last page', () => {
+  it("returns the remainder on the last page", () => {
     expect(pageSlice(items, 3)).toHaveLength(items.length - PAGE_SIZE * 2);
   });
 
-  it('clamps instead of returning nothing for an impossible page', () => {
+  it("clamps instead of returning nothing for an impossible page", () => {
     expect(pageSlice(items, 999)).toEqual(pageSlice(items, 3));
   });
 });
 
-describe('sortTrackedRepos', () => {
-  const older = tracked('older', '2026-01-01T00:00:00.000Z');
-  const newer = tracked('newer', '2026-06-01T00:00:00.000Z');
+describe("sortTrackedRepos", () => {
+  const older = tracked("older", "2026-01-01T00:00:00.000Z");
+  const newer = tracked("newer", "2026-06-01T00:00:00.000Z");
 
-  it('puts the most recently tracked first', () => {
-    const sorted = sortTrackedRepos([older, newer], 'recently-tracked');
-    expect(sorted.map((repo) => repo.name)).toEqual(['newer', 'older']);
+  it("puts the most recently tracked first", () => {
+    const sorted = sortTrackedRepos([older, newer], "recently-tracked");
+    expect(sorted.map((repo) => repo.name)).toEqual(["newer", "older"]);
   });
 
-  it('sorts by full name alphabetically', () => {
-    const sorted = sortTrackedRepos([newer, older], 'name');
-    expect(sorted.map((repo) => repo.name)).toEqual(['newer', 'older']);
+  it("sorts by fullName alphabetically", () => {
+    const sorted = sortTrackedRepos([newer, older], "name");
+    expect(sorted.map((repo) => repo.name)).toEqual(["newer", "older"]);
   });
 
-  it('does not mutate the input', () => {
+  it("sorts by fullName rather than the short name the chart shows, since that is what the list displays", () => {
+    // Short-name order would put "alpha" (owned by zeta) before "beta" (owned by alpha); fullName order must not.
+    const zetaOwnsAlpha = tracked("alpha", "2026-01-01T00:00:00.000Z");
+    zetaOwnsAlpha.fullName = "zeta/alpha";
+    zetaOwnsAlpha.owner = "zeta";
+    const alphaOwnsBeta = tracked("beta", "2026-01-01T00:00:00.000Z");
+    alphaOwnsBeta.fullName = "alpha/beta";
+    alphaOwnsBeta.owner = "alpha";
+
+    const sorted = sortTrackedRepos([zetaOwnsAlpha, alphaOwnsBeta], "name");
+
+    expect(sorted.map((repo) => repo.fullName)).toEqual([
+      "alpha/beta",
+      "zeta/alpha",
+    ]);
+  });
+
+  it("does not mutate the input", () => {
     const input = [newer, older];
-    sortTrackedRepos(input, 'name');
-    expect(input.map((repo) => repo.name)).toEqual(['newer', 'older']);
+    sortTrackedRepos(input, "name");
+    expect(input.map((repo) => repo.name)).toEqual(["newer", "older"]);
   });
 });

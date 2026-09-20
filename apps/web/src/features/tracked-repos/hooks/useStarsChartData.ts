@@ -24,7 +24,9 @@ export function useStarsChartData(repos: readonly TrackedRepo[]): readonly BarDa
         const repo = repos[index];
         if (repo === undefined || result.data === undefined) return [];
 
-        return [{ id: repo.fullName, label: repo.name, value: result.data.stars }];
+        return [
+          { id: repo.fullName, label: repo.name, fullLabel: repo.fullName, value: result.data.stars },
+        ];
       }),
   });
 }

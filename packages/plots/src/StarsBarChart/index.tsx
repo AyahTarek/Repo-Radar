@@ -21,7 +21,7 @@ export function StarsBarChart({
 }: BarChartProps) {
   const axisLabels = useMemo(() => data.map((datum) => truncateLabel(datum.label)), [data]);
   const values = useMemo(() => data.map((datum) => datum.value), [data]);
-  const fullLabels = useMemo(() => data.map((datum) => datum.label), [data]);
+  const fullLabels = useMemo(() => data.map((datum) => datum.fullLabel ?? datum.label), [data]);
 
   if (data.length === 0) {
     return (

@@ -2,6 +2,8 @@
 export type BarDatum = {
   id: string;
   label: string;
+  /** Untruncated text for the tooltip, if `label` is a shortened display form. */
+  fullLabel?: string | undefined;
   value: number;
 };
 

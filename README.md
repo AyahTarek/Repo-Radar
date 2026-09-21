@@ -49,6 +49,9 @@ Suggested-but-optional additions named in the brief, all included:
 Storybook is deployed as a standalone Vercel project at https://repo-radar-storybook.vercel.app/,
 covering every component in `packages/ui` and the `StarsBarChart` in `packages/plots` (7 stories total).
 
+Run locally during development with `pnpm storybook` (launches on `http://localhost:6006`), or browse
+the deployed version linked above.
+
 **Benefits it provides:**
 
 - **Living documentation** — each story is an isolated, interactive render of the component with its

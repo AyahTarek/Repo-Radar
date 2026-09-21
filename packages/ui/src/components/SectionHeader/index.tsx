@@ -16,10 +16,11 @@ export function SectionHeader({ title, subtitle, action }: SectionHeaderProps) {
       spacing={1.5}
       sx={{
         justifyContent: "space-between",
-        alignItems: { xs: "stretch", sm: "center" },
+        alignItems: "flex-start",
+        width: "100%",
       }}
     >
-      <Stack spacing={0.25} sx={{ minWidth: 0 }}>
+      <Stack spacing={0.25} sx={{ flex: "1 1 auto", minWidth: 0 }}>
         <Typography variant="h2" component="h2">
           {title}
         </Typography>

@@ -66,21 +66,29 @@ export function StarsChartCard({
     <AppCard>
       <Stack
         direction={{ xs: "column", sm: "row" }}
-        spacing={1.5}
+        spacing={2.5}
         sx={{
           justifyContent: "space-between",
-          alignItems: { xs: "stretch", sm: "center" },
-          flexWrap: "wrap",
+          alignItems: "flex-start",
         }}
       >
-        <Typography variant="h3" component="h2">
+        <Typography
+          variant="h3"
+          component="h2"
+          sx={{ flex: { xs: "1 1 100%", sm: "1 1 auto" }, minWidth: 0 }}
+        >
           {metricOption.axisLabel} per tracked repository
         </Typography>
 
         <Stack
           direction={{ xs: "column", sm: "row" }}
           spacing={1}
-          sx={{ flexWrap: "wrap", rowGap: 1 }}
+          sx={{
+            flexWrap: "wrap",
+            rowGap: 1,
+            flexShrink: 0,
+            width: { xs: "100%", sm: "auto" },
+          }}
         >
           <TextField
             select

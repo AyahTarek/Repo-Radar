@@ -29,10 +29,11 @@ export function TrackedToolbar({
       direction={{ xs: "column", sm: "row" }}
       spacing={1}
       sx={{
-        alignItems: { xs: "stretch", sm: "center" },
+        alignItems: "flex-start",
         flexWrap: "wrap",
         rowGap: 1,
         flexShrink: { sm: 0 },
+        width: { xs: "100%", sm: "auto" },
       }}
     >
       <TextField

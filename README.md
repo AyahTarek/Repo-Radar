@@ -18,17 +18,17 @@ in use; see `package.json` and `vercel.json`.
 
 Core requirements, each with where it lives:
 
-| Requirement | Where |
-| --- | --- |
-| Debounced GitHub repository search | `useDebouncedValue`, `features/repo-search` |
-| Track / untrack repositories | `features/tracked-repos/store` (Zustand) |
-| Tracked Repos view | `/tracked`, `pages/TrackedPage` |
-| Stars, open issues, last commit date | `TrackedRepoCard` (`pushed_at` stands in for last commit date - see [Assumptions](#assumptions)) |
-| Refresh individual and/or all repos | per-card `refetch`, `refreshAll` via `invalidateQueries` |
-| Independent loading/error state per repo | one React Query key per repo - see [§2](#2-independent-per-repo-state-falls-out-of-the-data-model) |
-| Persist tracked repos in `localStorage` | Zustand `persist` middleware, with schema-validated rehydration |
-| Proper TypeScript types | Zod schemas + `z.infer` at every boundary - see [§4](#4-validation-at-every-untrusted-boundary) |
-| Bar chart of stars per tracked repository | `StarsBarChart`, `packages/plots` |
+| Requirement                               | Where                                                                                              |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Debounced GitHub repository search        | `useDebouncedValue`, `features/repo-search`                                                        |
+| Track / untrack repositories              | `features/tracked-repos/store` (Zustand)                                                           |
+| Tracked Repos view                        | `/tracked`, `pages/TrackedPage`                                                                    |
+| Stars, open issues, last commit date      | `TrackedRepoCard` (`pushed_at` stands in for last commit date - see [Assumptions](#assumptions))   |
+| Refresh individual and/or all repos       | per-card `refetch`, `refreshAll` via `invalidateQueries`                                           |
+| Independent loading/error state per repo  | one React Query key per repo - see [§2](#2-independent-per-repo-state-falls-out-of-the-data-model) |
+| Persist tracked repos in `localStorage`   | Zustand `persist` middleware, with schema-validated rehydration                                    |
+| Proper TypeScript types                   | Zod schemas + `z.infer` at every boundary - see [§4](#4-validation-at-every-untrusted-boundary)    |
+| Bar chart of stars per tracked repository | `StarsBarChart`, `packages/plots`                                                                  |
 
 ### Beyond the brief
 
@@ -134,19 +134,44 @@ src/
 └─ types/        shared domain model
 ```
 
+### Design for growth
+
+The architecture is structured so that common changes are additive rather than modifications to
+existing code:
+
+- **New feature**: add a folder under `features/` with its own service, hooks, store, components,
+  helpers, constants and types. No feature imports from another feature's internals, so adding one
+  cannot break another.
+- **New chart metric**: add an entry to `CHART_METRIC_OPTIONS` in `features/tracked-repos/constants`
+  and a case to `useRepoChartData`. `StarsChartCard` picks it up automatically — the metric picker
+  is driven by that constant.
+- **New data provider**: `lib/github/client.ts` is the only file that calls `fetch`. Replacing or
+  augmenting the GitHub backend touches one file; no component ever sees a raw API payload.
+- **Version alignment across packages**: the pnpm catalog in `pnpm-workspace.yaml` is the single
+  source of version truth. It is structurally impossible for `apps/web` and `packages/plots` to
+  silently drift onto different React or MUI versions.
+- **Shared packages stay presentational**: `packages/ui` has no dependency on Zustand or
+  `localStorage`. The controlled `ThemeModeProvider` (`mode` + `onModeChange`) means any storage
+  mechanism — a Zustand store today, a user account tomorrow — can drive the theme without touching
+  the package. The dependency arrow stays `app → ui` and never inverts.
+- **Persistence extends safely**: adding a persisted field means updating the Zod schema in
+  `store/schema.ts` and bumping `STORAGE_VERSION`. Valid entries are kept, individually malformed
+  ones are dropped, and an unrecognisable blob falls back to an empty watchlist — no all-or-nothing
+  wipe.
+
 ### 1. Two kinds of state, one rule each
 
 **React Query owns everything that comes from GitHub. Zustand owns everything the user decides.** No
 server data is copied into Zustand and no user choice is stored in the query cache, which removes the
 whole class of stale-duplicate-state bugs and keeps what is persisted tiny.
 
-| Concern | Owner | Where |
-| --- | --- | --- |
-| Search results | React Query (`useInfiniteQuery`) | `features/repo-search` |
-| Repo stats | React Query, one query per repo | `features/tracked-repos` |
-| Which repos are tracked | Zustand + `persist` | `features/tracked-repos/store` |
-| Theme mode | Zustand + `persist` | `features/theme/store` |
-| Rate-limit quota | Zustand (derived from response headers) | `lib/github/rateLimit.ts` |
+| Concern                 | Owner                                   | Where                          |
+| ----------------------- | --------------------------------------- | ------------------------------ |
+| Search results          | React Query (`useInfiniteQuery`)        | `features/repo-search`         |
+| Repo stats              | React Query, one query per repo         | `features/tracked-repos`       |
+| Which repos are tracked | Zustand + `persist`                     | `features/tracked-repos/store` |
+| Theme mode              | Zustand + `persist`                     | `features/theme/store`         |
+| Rate-limit quota        | Zustand (derived from response headers) | `lib/github/rateLimit.ts`      |
 
 A tracked repo is stored as a **snapshot of identity only** (id, full name, owner, name, URL,
 description, language, tracked-at) keyed by `owner/name`. Keying by full name gives O(1) `isTracked`
@@ -281,6 +306,13 @@ pnpm --filter web test:e2e   # Playwright - runs in CI, needs a browser install 
   highlights only its matching card, proving the dataIndex -> id mapping end to end rather than at
   the unit level.
 
+**Why Playwright over Cypress**: `page.route()` intercepts `fetch` cleanly without the edge cases
+Cypress historically had with non-XHR requests; parallelism (`fullyParallel: true`) is free without
+a paid cloud plan; WebKit is supported alongside Chromium and Firefox with no extra cost; there is no
+Electron binary bundled into the install (~300 MB avoided in CI); and the trace viewer (`trace.zip`
+uploaded on every CI run as an artifact) gives step-by-step failure replay - scroll, click, network,
+DOM snapshot - without having to reproduce the failure locally.
+
 ## Continuous Integration
 
 GitHub Actions (`.github/workflows/ci.yml`) runs on every push to `main` and every pull request:
@@ -309,7 +341,7 @@ I'd keep click. Hover has real downsides here:
 - Click also matches what we already tested end-to-end and is the more common convention for
   chart-to-list linking (e.g. dashboards).
 
-What's shipped reflects that: click is the only way to *trigger* the highlight (scroll + a 2s pulse),
+What's shipped reflects that: click is the only way to _trigger_ the highlight (scroll + a 2s pulse),
 and hover is a secondary, purely decorative preview layered on top (a background tint on the matching
 card, no scroll, no pulse). None of the downsides above apply to that preview, because it never carries
 functionality click doesn't already provide - a touch or keyboard user loses nothing by never seeing
@@ -395,3 +427,11 @@ real deployment:
 - **Single locale, single anonymous user, by design for this scope.** Both i18n and
   authentication/multi-user support are additive rather than architectural changes given the
   validation-at-every-boundary and store patterns already in place - see [Assumptions](#assumptions).
+
+  **Adding i18n**: the app already uses `Intl.NumberFormat` and `Intl.RelativeTimeFormat` for all
+  locale-aware formatting, so numbers and dates are handled correctly without a library. The remaining
+  work is UI strings, which are currently co-located with their components. The migration path is:
+  extract those strings into a messages file (e.g. `en.json`), wrap call sites with a library such as
+  `react-i18next` or `FormatJS`, and add a locale provider to `AppProviders`. No architectural change
+  is needed — the feature-slice structure means each feature's strings are already implicitly grouped,
+  and the single API boundary means no translated text ever reaches `lib/github/`.

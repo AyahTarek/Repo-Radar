@@ -41,7 +41,7 @@ test('search, track a repo, and see it with its chart on the tracked page', asyn
   await page.getByRole('link', { name: 'Tracked' }).click();
   await expect(page).toHaveURL(/\/tracked/);
 
-  await expect(page.getByRole('heading', { name: 'Tracked repositories' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Radar Dashboard' })).toBeVisible();
   await expect(page.getByText(PRIMARY_REPO.full_name)).toBeVisible();
 
   // Proves the chart rendered with real data for the tracked repo, not an empty state.

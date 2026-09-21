@@ -24,6 +24,8 @@
     "@emotion/styled": "catalog:",
     "@mui/material": "catalog:",
     "@repo-radar/ui": "workspace:*",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
     "@storybook/addon-docs": "catalog:",
     "@storybook/react-vite": "catalog:",
     "husky": "catalog:",

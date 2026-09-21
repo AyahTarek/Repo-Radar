@@ -357,6 +357,26 @@ card, no scroll, no pulse). None of the downsides above apply to that preview, b
 functionality click doesn't already provide - a touch or keyboard user loses nothing by never seeing
 it, and a plain, motionless tint can't read as flicker the way a scroll-and-pulse would.
 
+## Untrack: no confirmation dialog
+
+Deliberately omitted. Confirmations earn their place when an action is **destructive and hard to
+undo** — deleting an account, wiping a database, sending an email to a thousand people. Untracking
+removes a row from `localStorage`; nothing is sent to a server, no quota is spent, and re-tracking
+takes one click on the same card or a quick search.
+
+The UX principle: **match the weight of the safeguard to the weight of the mistake.** A modal for
+"are you sure?" on a trivially reversible local action trains users to dismiss it without reading
+(confirmation fatigue), which erodes trust in the places a confirmation *does* matter.
+
+The untrack button is also on the card the user is already focused on, so the action is deliberate
+by construction — there is no "I meant the card above it" ambiguity that a dialog could catch.
+
+**What would earn its place instead:** an undo toast ("Untracked owner/repo · Undo", 5 s) — the
+Gmail/Slack pattern for reversible destructive actions. Zero friction for the 99 % who meant it,
+instant recovery for the 1 % who didn't. This would be worth adding if the watchlist could grow
+large enough (50 + repos) that re-finding and re-tracking a misfired untrack starts to feel
+genuinely painful. At current scope it is an enhancement, not a gap.
+
 ## Deployment
 
 `vercel.json` builds the workspace and serves the SPA:

@@ -3,6 +3,10 @@
 A GitHub repository dashboard: search repositories, track the ones you care about, and monitor their
 stars, open issues and last commit date with per-repo and bulk refresh.
 
+**Live deployments:**
+- **App**: https://repo-radar-gold.vercel.app/
+- **Storybook**: https://repo-radar-storybook.vercel.app/
+
 - Debounced search with infinite scroll (and a keyboard-accessible `Load more`)
 - Track / untrack, persisted in `localStorage` and restored on reload
 - Independent loading, error and retry state per tracked repository
@@ -35,9 +39,29 @@ Core requirements, each with where it lives:
 Suggested-but-optional additions named in the brief, all included:
 
 - **Monorepo** with `packages/ui` and `packages/plots` split out from the app.
-- **Storybook** - 7 stories across both shared packages (see [Take-home scope vs. production](#take-home-scope-vs-production)
+- **Storybook** - 7 stories across both shared packages, deployed at https://repo-radar-storybook.vercel.app/
+  (see [Storybook](#storybook) and [Take-home scope vs. production](#take-home-scope-vs-production)
   for what it doesn't cover).
 - **Theme switching** - dark/light, persisted, no flash on load.
+
+### Storybook
+
+Storybook is deployed as a standalone Vercel project at https://repo-radar-storybook.vercel.app/,
+covering every component in `packages/ui` and the `StarsBarChart` in `packages/plots` (7 stories total).
+
+**Benefits it provides:**
+
+- **Living documentation** — each story is an isolated, interactive render of the component with its
+  full prop surface. Reviewers and future contributors can explore every variant (sizes, states,
+  themes) without running the app or knowing where the component is used.
+- **Responsive preview** — Storybook's viewport toolbar lets you switch between mobile, tablet and
+  desktop breakpoints instantly, making responsive behaviour easy to verify for each component in
+  isolation rather than hunting for the right screen state in the full app.
+- **Interaction testing** — Storybook's `@storybook/test` (built on Vitest + Testing Library) can
+  drive component interactions directly in the story via `play` functions: click a button, type into
+  an input, assert on the result — all without mounting a full page. This would be the natural place
+  to add component-level interaction tests for things like the theme toggle or the chart's bar-click
+  callback, complementing the existing Playwright e2e suite at a finer granularity.
 
 Other enhancements added beyond what was asked:
 
@@ -379,19 +403,43 @@ genuinely painful. At current scope it is an enhancement, not a gap.
 
 ## Deployment
 
-`vercel.json` builds the workspace and serves the SPA:
+The repository has two Vercel projects, both pointing to the same GitHub repo.
+
+### App (`https://repo-radar-gold.vercel.app/`)
+
+`apps/web/vercel.json` configures the app deployment. In the Vercel dashboard the **Root Directory**
+is set to `apps/web`, so Vercel reads this file and resolves all paths relative to that directory:
 
 ```json
 {
+  "framework": "vite",
   "installCommand": "pnpm install --frozen-lockfile",
-  "buildCommand": "pnpm --filter web build",
-  "outputDirectory": "apps/web/dist",
+  "buildCommand": "pnpm build",
+  "outputDirectory": "dist",
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
 ```
 
-Import the repository into Vercel, keep the root directory as the repository root, and optionally set
-`VITE_GITHUB_TOKEN` in the project's environment variables (see the warning above).
+The `rewrites` catch-all is what makes deep links like `/tracked?sort=recently-tracked` work on a
+hard refresh — without it, the server has no route for `/tracked` and returns 404 before React Router
+ever loads.
+
+Optionally set `VITE_GITHUB_TOKEN` in the project's environment variables (see the warning above).
+
+### Storybook (`https://repo-radar-storybook.vercel.app/`)
+
+A second Vercel project with **Root Directory** left as the repository root picks up `vercel.json`
+at the root, which points at the Storybook build:
+
+```json
+{
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm build-storybook",
+  "outputDirectory": "storybook-static"
+}
+```
+
+No SPA rewrites are needed — Storybook outputs a fully static site.
 
 ## Assumptions
 

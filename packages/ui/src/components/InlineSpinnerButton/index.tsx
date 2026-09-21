@@ -29,17 +29,24 @@ export function InlineSpinnerButton({
   onClick,
   size = 'medium',
 }: InlineSpinnerButtonProps) {
+  const isDisabled = disabled || busy;
+
   return (
+    // MUI Tooltip cannot attach pointer events to a disabled button, so we
+    // wrap it in a <span> to keep the tooltip working in both states.
     <Tooltip title={label}>
-      <IconButton
-        onClick={onClick}
-        disabled={disabled || busy}
-        aria-label={label}
-        aria-busy={busy}
-        size={size}
-      >
-        {busy ? <CircularProgress size={SPINNER_SIZE[size]} /> : icon}
-      </IconButton>
+      <span>
+        <IconButton
+          onClick={onClick}
+          disabled={isDisabled}
+          aria-label={label}
+          aria-busy={busy}
+          size={size}
+          sx={{ display: 'flex' }}
+        >
+          {busy ? <CircularProgress size={SPINNER_SIZE[size]} /> : icon}
+        </IconButton>
+      </span>
     </Tooltip>
   );
 }

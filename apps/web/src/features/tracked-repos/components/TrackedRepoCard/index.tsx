@@ -48,15 +48,18 @@ export const TrackedRepoCard = memo(function TrackedRepoCard({
     repo.fullName,
   );
 
-  // Runs only on the rising edge (a click), not while the highlight is fading out.
-  // `highlightToken` is in the deps so re-clicking the same already-highlighted
-  // repo re-scrolls too, instead of silently doing nothing.
+  // `scrollKey` is null while this card is not highlighted, and equals the
+  // current token when it is. The effect reads it directly, so the lint rule
+  // is satisfied. Changing the token while still highlighted (re-pulse of the
+  // same card) produces a new non-null value, which re-runs the effect and
+  // re-scrolls — without needing `highlightToken` as a separate dep.
+  const scrollKey = isHighlighted ? highlightToken : null;
   useEffect(() => {
-    if (!isHighlighted) return;
+    if (scrollKey === null) return;
     document
       .getElementById(trackedRepoCardId(repo.fullName))
       ?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [isHighlighted, highlightToken, repo.fullName]);
+  }, [scrollKey, repo.fullName]);
 
   return (
     <AppCard

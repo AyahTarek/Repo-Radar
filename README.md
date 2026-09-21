@@ -3,9 +3,9 @@
 A GitHub repository dashboard: search repositories, track the ones you care about, and monitor their
 stars, open issues and last commit date with per-repo and bulk refresh.
 
-**Live deployments:**
-- **App**: https://repo-radar-gold.vercel.app/
-- **Storybook**: https://repo-radar-storybook.vercel.app/
+**Live deployments:** [App](https://repo-radar-gold.vercel.app/) · [Storybook](https://repo-radar-storybook.vercel.app/)
+
+**Features:**
 
 - Debounced search with infinite scroll (and a keyboard-accessible `Load more`)
 - Track / untrack, persisted in `localStorage` and restored on reload

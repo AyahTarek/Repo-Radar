@@ -18,6 +18,7 @@ export default defineConfig({
   server: { port: DEV_PORT },
   preview: { port: PREVIEW_PORT },
   build: {
+    outDir: '../../dist',
     rolldownOptions: {
       output: {
         // MUI and React change far less often than app code, so keeping them in

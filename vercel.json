@@ -2,10 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "pnpm install --frozen-lockfile",
   "buildCommand": "pnpm --filter web build",
-  "outputDirectory": "apps/web/dist",
+  "outputDirectory": "dist",
   "routes": [
     { "src": "^/assets/(.*)$", "dest": "/assets/$1" },
     { "src": "^/favicon\\.svg$", "dest": "/favicon.svg" },
-    { "src": ".*", "dest": "/index.html" }
+    { "src": ".*", "dest": "/index.html", "status": 200 }
   ]
 }

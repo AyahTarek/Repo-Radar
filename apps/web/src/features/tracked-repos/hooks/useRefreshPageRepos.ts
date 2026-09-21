@@ -1,10 +1,9 @@
-import { useIsFetching, useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useCallback, useState } from 'react';
 import { queryKeys } from '@/lib/queryKeys';
 
 type RefreshAllResult = {
   refreshAll: () => void;
-  /** Derived from the cache, never stored - so it cannot go stale. */
   isRefreshing: boolean;
 };
 
@@ -12,17 +11,25 @@ type RefreshAllResult = {
  * `refetchType: 'active'` refetches only mounted queries, which - because the
  * tracked list is paginated - means the 15 repos on screen rather than the whole
  * watchlist. That is what keeps one click from spending an entire hourly quota.
+ *
+ * `isRefreshing` is tracked with local state tied to this invalidation call
+ * rather than `useIsFetching`, because `useIsFetching({ queryKey: ['repo'] })`
+ * uses prefix-matching and would also fire when a single repo card is refreshed
+ * individually — causing the "Refresh all" button to show a spinner for an
+ * unrelated operation.
  */
 export function useRefreshPageRepos(): RefreshAllResult {
   const queryClient = useQueryClient();
-  const activeCount = useIsFetching({ queryKey: queryKeys.repos() });
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const refreshAll = useCallback(() => {
-    void queryClient.invalidateQueries({
+  const refreshAll = useCallback(async () => {
+    setIsRefreshing(true);
+    await queryClient.invalidateQueries({
       queryKey: queryKeys.repos(),
       refetchType: 'active',
     });
+    setIsRefreshing(false);
   }, [queryClient]);
 
-  return { refreshAll, isRefreshing: activeCount > 0 };
+  return { refreshAll, isRefreshing };
 }

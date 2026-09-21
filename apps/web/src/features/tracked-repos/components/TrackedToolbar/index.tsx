@@ -60,12 +60,17 @@ export function TrackedToolbar({
         disabled={isRefreshing || visibleCount === 0}
         variant="outlined"
         startIcon={
-          isRefreshing ? <CircularProgress size={16} /> : <RefreshIcon />
+          // size={20} matches MUI's .MuiButton-iconSizeMedium rule (20 px) so
+          // the startIcon container stays the same width in both states.
+          isRefreshing ? <CircularProgress size={20} /> : <RefreshIcon />
         }
         sx={{ width: { xs: "100%", sm: "auto" } }}
       >
-        {/* Says "this page" because only mounted cards are refetched. */}
-        {isRefreshing ? "Refreshing" : `Refresh this page (${visibleCount})`}
+        {/*
+         * Always render the full label so the button width is stable.
+         * Says "this page" because only mounted cards are refetched.
+         */}
+        Refresh this page ({visibleCount})
       </Button>
     </Stack>
   );

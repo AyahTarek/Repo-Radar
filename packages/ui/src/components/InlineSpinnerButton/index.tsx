@@ -13,7 +13,9 @@ export type InlineSpinnerButtonProps = {
   size?: 'small' | 'medium' | undefined;
 };
 
-const SPINNER_SIZE = { small: 16, medium: 20 } as const;
+// Match MUI's icon font sizes (small = 20 px, medium = 24 px) so the IconButton
+// doesn't resize when the spinner replaces the icon.
+const SPINNER_SIZE = { small: 20, medium: 24 } as const;
 
 /**
  * Every refresh action in the app is one of these, so a request in flight always

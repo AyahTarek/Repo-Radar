@@ -26,8 +26,13 @@ export const CHART_METRIC_OPTIONS = [
 
 export const DEFAULT_CHART_METRIC = "stars";
 
-/** Sentinel `language` filter value meaning "don't filter". */
-export const ALL_LANGUAGES = "";
+/**
+ * Sentinel `language` filter value meaning "don't filter".
+ * Must be a non-empty string so MUI's Select renders it as a real selected
+ * option rather than treating it as "nothing selected" (which empty string
+ * triggers in MUI v6+).
+ */
+export const ALL_LANGUAGES = "__all__";
 
 /** Long enough to notice, short enough that it reads as a pulse, not a stuck state. */
 export const HIGHLIGHT_DURATION_MS = 2000;

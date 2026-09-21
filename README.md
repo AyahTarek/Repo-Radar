@@ -46,6 +46,9 @@ Other enhancements added beyond what was asked:
 - GitHub rate-limit visibility - a banner plus a typed, kind-aware retry policy, instead of raw
   fetch failures.
 - URL-persisted search query and sort, so a link is shareable and a reload doesn't lose your place.
+- **Responsive UI** - every screen from mobile (≈375 px) upward is a first-class target. Rows and toolbars stack vertically on small screens, buttons stretch to full width, the chart and
+  card list reflow, and nothing clips or overflows horizontally - verified in Playwright on a
+  Pixel-5 viewport.
 - 107 vitest tests, a Playwright e2e suite, and `vitest-axe` accessibility assertions - see
   [§8](#8-testing).
 - GitHub Actions CI (lint/typecheck/test/build/e2e) gating `main` - see
@@ -255,6 +258,13 @@ Search is the hot path, defended in five layers: a 400 ms debounce, a minimum qu
 60-second `staleTime` (so backspacing to an earlier query is an instant cache hit), `AbortSignal`
 cancellation of superseded requests, and the guarded sentinel above.
 
+> **Cancelled requests in DevTools are intentional.** Every keystroke starts a 400 ms debounce
+> timer; if the next key arrives before the timer fires, the in-flight request (if any) is aborted
+> via `AbortSignal` before the new one is sent. This means only the most recent query ever
+> completes — stale responses from earlier keystrokes are discarded rather than landing out of order
+> and replacing a fresher result. The `net::ERR_ABORTED` entries visible in the Network panel are
+> evidence the race-condition prevention is working, not a bug.
+
 Rendering: result and tracked cards are `memo`'d so tracking one repo re-renders one card; Zustand is
 read through narrow selectors so a theme change does not re-render the list; and the chart reads the
 same query keys as the cards via `useQueries({ combine })`, adding no requests and re-rendering only
@@ -424,6 +434,12 @@ real deployment:
 - **Rate-limit handling is best-effort, not eliminated.** The banner and typed retry policy make the
   unauthenticated limits usable for review; a production service would front GitHub with its own
   caching layer so user-facing requests never touch GitHub's quota directly.
+- **Inline comments are more explicit than production norms.** Several comments call out the
+  _why_ behind a decision (query-key prefix matching, the debounce abort strategy, the token-bump
+  pattern, pagination edge cases). In a production codebase those decisions would live in a PR
+  description, an ADR, or team conventions, and the code itself would carry only the comments
+  needed to understand _what_ is non-obvious at a glance. They are left here deliberately to make
+  the reasoning legible to reviewer.
 - **Single locale, single anonymous user, by design for this scope.** Both i18n and
   authentication/multi-user support are additive rather than architectural changes given the
   validation-at-every-boundary and store patterns already in place - see [Assumptions](#assumptions).
